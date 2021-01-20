@@ -1,0 +1,6 @@
+[azure]
+23.100.14.56
+
+[azure:vars]
+ansible_user=azureuser
+ansible_ssh_private_key_file=~/.ssh/centos_key.pem

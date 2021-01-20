@@ -1,0 +1,46 @@
+# ---
+# - name: Install Apache.
+#   hosts: all
+  
+#   tasks:
+#     - name: Install Apache.
+#       command: yum install --y -quiet httpd httpd-devel
+#     - name: Copy config.
+#       command: >
+#         cp httpd.conf /etc/httpd/conf/httpd.conf
+#     - command: >
+#         cp httpd-vhosts /etc/httpd/conf/httpd-vhosts.conf
+#     - name: Start Apache andconfigure it to run on boot.
+#       command: server httpd start
+#     - command: chkconfig httpd on
+
+- name: Install Apache.
+  hosts: all
+  become: true
+  
+  tasks:
+    - name: Install Apache.
+      yum: # quiet by default
+        name:
+          - httpd
+          - httpd-devel
+        state: present 
+    - name: Copy config.
+      copy:
+        src: "{{ item.src }}" #ginga is syntax for templates in python
+        dest: "{{ item.dest }}"
+        owner: root
+        group: root
+        mode: 0644 # pass it a file mode
+      with_items: # there are multiple things we are going to process
+        - src: httpd.config
+          dest: /etc/httpd/conf/httpd.conf
+        - src: httpd-vhosts.conf
+          dest: /etc/httpd/conf/httpd-vhosts.conf
+
+    - name: Ensure Apache started and configure it to run at boot.
+      service:
+        name: httpd
+        state: started
+        enabled: true
+        
