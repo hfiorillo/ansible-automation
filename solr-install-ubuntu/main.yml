@@ -1,0 +1,57 @@
+# download, install and check & configuring the installation of solr
+
+---
+- hosts: solr
+  become: true #become root user
+
+  vars_files: #this key lets you define one or more variables files to load in before the playbook runs
+    - vars.yml
+
+  pre_tasks: # updates cache first, seperated from tasks because its pre-set up
+    - name: Update apt cache if needed.
+      apt: 
+        update_cache: true
+        cache_valid_time: 3600
+
+  handlers: # install solr service, typically pop a handler in for any service being installed
+    - name: Restart solr
+      service:
+        name: solr
+        state: restarted
+  
+  tasks: # solr requires java
+    - name: Install Java.
+      apt: # use package: to make this cross platform
+        name: openjdk-8-jdk
+        state: present
+    
+    - name: Download Solr.
+      get_url: # using jinja inside quotes {{}} to set the solr version = solr_version variable in vars BINARY RELEASE
+        url: "https://apache.mirrors.nublue.co.uk/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
+        dest: "{{ download_dir }}/solr-{{ solr_version }}.tgz" # pass full file name or ansible will report a change every time it runs
+        checksum: "{{ solr_checksum }}"
+    
+    - name: Expand Solr. # unarchive solr
+      unarchive:
+        src: "{{ download_dir }}/solr-{{ solr_version }}.tgz"
+        dest: "{{ download_dir }}"
+        remote_src: true # by default unarchive will take a file and copy it up to the server and then copy it - remote_src is true stops the copy
+        creates: "{{ download_dir }}/solr-{{ solr_version }}/README"
+    
+    - name: Run Solr installation script
+      become: true
+      command: >
+        {{ download_dir }}/solr-{{ solr_version }}/bin/install_solr_service.sh
+        {{ download_dir }}/solr-{{ solr_version }}.tgz
+        -i /opt
+        -d /var/solr
+        -u solr
+        -s solr
+        -p 8983
+        creates={{ solr_dir }}/bin/solr
+    
+    - name: Ensure solr is started and enabled at boot.
+      service:
+        name: solr
+        state: started
+        enabled: yes

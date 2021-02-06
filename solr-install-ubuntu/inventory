@@ -1,0 +1,6 @@
+# dynamic public IP so don't keep using the same IP
+# username for anisble-ubuntu = azureuser
+
+[solr]
+40.115.15.33 ansible_user=azureuser
+
