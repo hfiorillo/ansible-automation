@@ -1,5 +1,5 @@
 # download, install and check & configuring the installation of solr
-
+# <public-ip>:8983
 ---
 - hosts: solr
   become: true #become root user
