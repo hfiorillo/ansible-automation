@@ -1,0 +1,11 @@
+[ubuntu]
+40.113.133.88
+
+[ubuntu:vars]
+ansible_user=azureuser
+
+[centos]
+52.151.80.159
+
+[centos:vars]
+ansible_user=azureuser

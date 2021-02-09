@@ -1,0 +1,68 @@
+---
+- name: Install Apache.
+  hosts: centos
+  become: true
+
+  vars:
+    proxy_vars:
+      http_proxy: http://example-proxy:80/
+      https_proxy: http://example-proxy:80/
+    key: value
+  
+  vars_files:
+    - vars/main.yml
+
+  #environment:
+  #  http_proxy: http://example-proxy:80/
+  #  https_proxy: http://example-proxy:80/
+
+  handlers: # used to restart services, notify slack channels, sending API requests etc.
+    - name: restart apache
+      service:
+        name: httpd
+        state: restarted
+      # notify: restart memcached
+    
+    #- name: restart memcached
+    #  service:
+    #    name: memchached
+    #    state: restarted
+
+  tasks: 
+    - name: Download a file.
+      get_url:
+        url: http://ipv4.download.thinkbroadband.com/20MB.zip
+        dest: /tmp
+      environment: proxy_vars
+
+
+  # - name: Add environment variable to remote user's shell.  # setting env variables that will persist on the server
+  #    become: false # stops root on this task
+  #    lineinfile:
+  #      dest: "~/.bash_profile" # look at the destination
+  #      regexp: '^ENV_VAR=' # regular expression
+  #      line: 'ENV_VAR=value' # line will be placed in the file (at the end by default)
+    
+  #  - name: Get the value of an environment variable.
+  #    shell: 'source ~/.bash_profile && echo $ENV_VAR' # cmd module doesn't work here
+  #    register: lol # registers the $ENV_VAR to foo
+    
+    - debug: msg="The variable is {{ lol.stdout }}"
+
+    - name: Install Apache.
+      yum: # quiet by default
+        # use_backend: yum4
+        name: httpd
+        state: present
+    
+    - name: Copy test config file.
+      copy:
+        src: files/test.conf
+        dest: /etc/httpd/conf.d/test.conf
+      notify: restart apache # if a change then call handler
+ 
+    - name: Ensure Apache started and configure it to run at boot.
+      service:
+        name: httpd
+        state: started
+        enabled: true
