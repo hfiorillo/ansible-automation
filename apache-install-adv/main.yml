@@ -1,0 +1,27 @@
+---
+- name: Install Apache.
+  hosts: all
+  become: true
+
+  handlers: # these are imported
+    - import_tasks: handlers/apache.yml
+  
+  pre_tasks:
+    - name: Load variable files.
+      include_vars: "{{ item }}"
+      with_first_found:
+          - "vars/apache_{{ ansible_os_family }}.yml"
+          - "vars/apache_default.yml"
+          
+  tasks: # these are imported
+    - import_tasks: tasks/apache.yml
+
+    - name: Check for existing log files in dynamic log_file_paths variable.
+      find:
+        paths: "{{ item }}"
+        patterns: '*.log'
+      register: found_log_file_paths
+      with_items: "{{ log_file_paths }}"
+
+# how to import a play into a playbook
+# - import_playbook: app.yml
